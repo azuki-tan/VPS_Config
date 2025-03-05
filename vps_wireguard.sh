@@ -6,8 +6,9 @@ show_wireguard_menu() {
     echo "===== WireGuard (wg-easy) Menu ====="
     echo "1: Install WireGuard"
     echo "2: Change WireGuard Password"
-    echo "3: Stop/Start WireGuard Docker"
-    echo "4: Exit"
+    echo "3: Change Mode Connection"
+    echo "4: Stop/Start WireGuard Docker"
+    echo "5: Exit"
     read -p "Enter your choice: " choice
 }
 
@@ -35,6 +36,10 @@ install_wireguard() {
         domain=$(curl -s ifconfig.me)
         echo "Using WAN IP: $domain"
     fi
+
+    # Get LAN IP
+    lan_ip=$(hostname -I | awk '{print $1}')
+    echo "Detected LAN IP: $lan_ip"
 
     # Create directory for WireGuard configuration
     sudo mkdir -p /etc/docker/wireguard
@@ -76,7 +81,9 @@ EOF
     docker compose up -d
 
     echo "WireGuard (wg-easy) installed successfully!"
-    echo "Access the web UI at: http://$domain:51821"
+    echo "Access the web UI at:"
+    echo "  - http://$lan_ip:51821"
+    echo "  - http://$domain:51821"
     echo "Password: $password"
 }
 
@@ -84,29 +91,48 @@ EOF
 change_wireguard_password() {
     echo "Changing WireGuard web UI password..."
 
-    # Get password input (with random default)
     read -r -p "Enter new WireGuard web UI password (leave blank for random): " new_password
     if [ -z "$new_password" ]; then
         new_password=$(generate_random_password)
         echo "Generated random password: $new_password"
     fi
 
-    # Check if WireGuard is running
     cd /etc/docker/wireguard || { echo "Error: WireGuard directory not found."; exit 1; }
     if ! docker ps -q -f name=wg-easy >/dev/null; then
         echo "Error: WireGuard is not running."
         return
     fi
 
-    # Update password in docker-compose.yml
     sed -i "s|PASSWORD=.*|PASSWORD=$new_password|" docker-compose.yml
-
-    # Restart the container
     docker compose down
     docker compose up -d
 
     echo "WireGuard password changed successfully!"
     echo "New Password: $new_password"
+}
+
+# Function to change connection mode
+change_mode_connection() {
+    echo "Select connection mode:"
+    echo "1: Only Local LAN"
+    echo "2: All Traffic Network"
+    read -p "Enter your choice: " mode_choice
+
+    cd /etc/docker/wireguard || { echo "Error: WireGuard directory not found."; exit 1; }
+
+    if [ "$mode_choice" -eq 1 ]; then
+        sed -i "s|WG_ALLOWED_IPS=.*|WG_ALLOWED_IPS=10.8.0.0/24|" docker-compose.yml
+        echo "Changed to Only Local LAN mode."
+    elif [ "$mode_choice" -eq 2 ]; then
+        sed -i "s|WG_ALLOWED_IPS=.*|WG_ALLOWED_IPS=0.0.0.0/0, ::/0|" docker-compose.yml
+        echo "Changed to All Traffic Network mode."
+    else
+        echo "Invalid choice."
+        return
+    fi
+
+    docker compose down
+    docker compose up -d
 }
 
 # Function to stop/start WireGuard Docker container
@@ -136,10 +162,14 @@ while true; do
             read -p "Press Enter to continue..." < /dev/tty
             ;;
         3)
-            stop_start_wireguard
+            change_mode_connection
             read -p "Press Enter to continue..." < /dev/tty
             ;;
         4)
+            stop_start_wireguard
+            read -p "Press Enter to continue..." < /dev/tty
+            ;;
+        5)
             echo "Exiting WireGuard menu..."
             break
             ;;
