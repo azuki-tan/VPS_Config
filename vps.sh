@@ -8,7 +8,8 @@ show_main_menu() {
     echo "2: Portainer"
     echo "3: WireGuard (wg-easy)"
     echo "4: SMB"
-    echo "5: Exit"
+    echo "5: Port Forwarding"
+    echo "6: Exit"
 }
 
 # Function to execute a remote script using bash <(curl -sSL "URL")
@@ -35,7 +36,8 @@ while true; do
         2) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_portainer.sh" ;;
         3) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_wireguard.sh" ;;
         4) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_smb.sh" ;;
-        5) 
+        5) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_socat.sh" ;;
+        6) 
             echo "Exiting..."
             exit 0 
             ;;
