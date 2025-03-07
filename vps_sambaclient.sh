@@ -3,32 +3,32 @@
 # Kiểm tra và cài đặt các gói cần thiết
 check_packages() {
   if ! dpkg -s smbclient &> /dev/null; then
-    read -p "smbclient chưa được cài đặt. Bạn có muốn cài đặt không? (y/n): " confirm
+    read -p "smbclient is not install. Install? (y/n): " confirm
     if [[ "$confirm" == "y" ]]; then
       sudo apt-get update
       sudo apt-get install -y smbclient
     else
-      echo "Hủy bỏ cài đặt. Menu không thể hoạt động mà không có smbclient."
+      echo "Cancelled!"
       exit 1
     fi
   fi
 
   if ! dpkg -s cifs-utils &> /dev/null; then
-    read -p "cifs-utils chưa được cài đặt. Bạn có muốn cài đặt không? (y/n): " confirm
+    read -p "cifs-utils is not install. Install? (y/n): " confirm
     if [[ "$confirm" == "y" ]]; then
       sudo apt-get install -y cifs-utils
     else
-      echo "Hủy bỏ cài đặt. Menu không thể hoạt động mà không có cifs-utils."
+      echo "Cancelled!"
       exit 1
     fi
   fi
 
   if ! dpkg -s linux-modules-extra-$(uname -r) &> /dev/null; then
-      read -p "linux-modules-extra-$(uname -r) chưa được cài đặt. Bạn có muốn cài đặt không? (y/n): " confirm
+      read -p "linux-modules-extra-$(uname -r) is not install. Install? (y/n): " confirm
       if [[ "$confirm" == "y" ]]; then
           sudo apt-get install -y linux-modules-extra-$(uname -r)
       else
-          echo "Hủy bỏ cài đặt. Menu không thể hoạt động mà không có linux-modules-extra-$(uname -r)."
+          echo "Cancelled"
           exit 1
       fi
   fi
@@ -42,8 +42,8 @@ load_utf8_module() {
 # Kết nối đến máy chủ Samba
 connect_samba_server() {
   clear
-  read -p "Enter IP Samba Server (ví dụ: //192.168.1.100/share): " server_address
-  read -p "Enter mount point (ví dụ: /mnt/smb): " mount_point
+  read -p "Enter IP Samba Server (example: //192.168.1.100/share): " server_address
+  read -p "Enter mount point (example: /mnt/smb): " mount_point
   read -p "Username: " username
   read -sp "Password: " password
   echo ""  # Thêm dòng mới để tránh hiển thị mật khẩu
