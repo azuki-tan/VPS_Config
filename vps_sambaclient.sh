@@ -42,27 +42,27 @@ load_utf8_module() {
 # Kết nối đến máy chủ Samba
 connect_samba_server() {
   clear
-  read -p "Nhập địa chỉ máy chủ Samba (ví dụ: //192.168.1.100/share): " server_address
-  read -p "Nhập thư mục mount point (ví dụ: /mnt/smb): " mount_point
-  read -p "Nhập tên người dùng: " username
-  read -sp "Nhập mật khẩu: " password
+  read -p "Enter IP Samba Server (ví dụ: //192.168.1.100/share): " server_address
+  read -p "Enter mount point (ví dụ: /mnt/smb): " mount_point
+  read -p "Username: " username
+  read -sp "Password: " password
   echo ""  # Thêm dòng mới để tránh hiển thị mật khẩu
   sudo mkdir -p "$mount_point"
   sudo mount -t cifs "$server_address" "$mount_point" -o username="$username",password="$password"
   if [ $? -eq 0 ]; then
-    read -n 1 -s -r -p "Kết nối thành công! Nhấn phím bất kỳ để tiếp tục..."
+    read -n 1 -s -r -p "Successful! Press any key to continue..."
     echo ""
   else
-    echo "Kết nối thất bại. Thử kết nối với SMB v2..."
+    echo "Error connecting. Try with SMB v2..."
     sudo mount -t cifs "$server_address" "$mount_point" -o username="$username",password="$password",vers=2.0
     if [ $? -eq 0 ]; then
-      read -n 1 -s -r -p "Kết nối thành công (SMB v2)! Nhấn phím bất kỳ để tiếp tục..."
+      read -n 1 -s -r -p "Successful (SMB v2)! Press any key to continue..."
       echo ""
     else
-      echo "Kết nối thất bại. Xem lại thông tin kết nối và thử lại."
-      echo "Lỗi từ dmesg:"
+      echo "Error connect."
+      echo "Error dmesg:"
       sudo dmesg | tail -20
-      read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
+      read -n 1 -s -r -p "Press any key to continue..."
       echo ""
     fi
   fi
@@ -72,7 +72,7 @@ connect_samba_server() {
 list_connected_samba_servers() {
   clear
   findmnt -t cifs
-  read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
+  read -n 1 -s -r -p "Press any key to continue...."
   echo ""
 }
 
@@ -80,49 +80,51 @@ list_connected_samba_servers() {
 umount_samba_server() {
   clear
   list_connected_samba_servers
-  read -p "Nhập thư mục mount point cần gỡ: " mount_point
+  read -p "Enter Target to remove: " mount_point
   sudo umount "$mount_point"
   if [ $? -eq 0 ]; then
-    echo "Gỡ mount thành công!"
+    echo "Remove Successful!"
   else
-    echo "Gỡ mount thất bại. Kiểm tra lại thư mục mount."
+    echo "Error Target"
   fi
-  read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
+  read -n 1 -s -r -p "Press any key to continue..."
   echo ""
 }
 
 # Gỡ bỏ cài đặt Samba
 uninstall_samba() {
   clear
-  read -p "Bạn có chắc chắn muốn gỡ bỏ tất cả các gói liên quan đến Samba? (y/n): " confirm
+  read -p "Do you want to remove samba client? (y/n): " confirm
   if [[ "$confirm" == "y" ]]; then
     sudo apt-get remove --purge -y smbclient cifs-utils samba*
     sudo apt-get autoremove -y
-    echo "Gỡ bỏ cài đặt thành công."
+    echo "Unistalled"
   else
-    echo "Hủy bỏ gỡ bỏ cài đặt."
+    echo "Cancelled"
   fi
-  read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
+  read -n 1 -s -r -p "Press any key to continue..."
   echo ""
 }
 
 # Hiển thị menu chính
 display_menu() {
   clear
+  echo "--------------------------"
   echo "Menu Samba Client"
-  echo "1: Kết nối máy chủ Samba"
-  echo "2: Liệt kê kết nối Samba"
-  echo "3: Gỡ cài đặt Samba"
-  echo "4: Gỡ folder mount"
-  echo "5: Thoát"
-  read -p "Chọn tùy chọn: " choice
+  echo "--------------------------"
+  echo "1: Create mount connect to Samba"
+  echo "2: List connected Samba"
+  echo "3: Unistall Samba"
+  echo "4: Remove mount mount"
+  echo "5: Exit"
+  read -p "Choose number: " choice
   case "$choice" in
     1) connect_samba_server ;;
     2) list_connected_samba_servers ;;
     3) uninstall_samba ;;
     4) umount_samba_server ;;
     5) exit 0;;
-    *) echo "Tùy chọn không hợp lệ." ;;
+    *) echo "Error" ;;
   esac
 }
 
