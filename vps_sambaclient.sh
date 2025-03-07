@@ -76,6 +76,21 @@ list_connected_samba_servers() {
   echo ""
 }
 
+# Gỡ folder mount
+umount_samba_server() {
+  clear
+  list_connected_samba_servers
+  read -p "Nhập thư mục mount point cần gỡ: " mount_point
+  sudo umount "$mount_point"
+  if [ $? -eq 0 ]; then
+    echo "Gỡ mount thành công!"
+  else
+    echo "Gỡ mount thất bại. Kiểm tra lại thư mục mount."
+  fi
+  read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
+  echo ""
+}
+
 # Gỡ bỏ cài đặt Samba
 uninstall_samba() {
   clear
@@ -98,13 +113,15 @@ display_menu() {
   echo "1: Kết nối máy chủ Samba"
   echo "2: Liệt kê kết nối Samba"
   echo "3: Gỡ cài đặt Samba"
-  echo "4: Thoát"
+  echo "4: Gỡ folder mount"
+  echo "5: Thoát"
   read -p "Chọn tùy chọn: " choice
   case "$choice" in
     1) connect_samba_server ;;
     2) list_connected_samba_servers ;;
     3) uninstall_samba ;;
-    4) exit 0 ;;
+    4) umount_samba_server ;;
+    5) exit 0;;
     *) echo "Tùy chọn không hợp lệ." ;;
   esac
 }
