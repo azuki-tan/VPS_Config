@@ -3,11 +3,13 @@
 # Function to display the main menu
 show_main_menu() {
     clear
+    echo "----------------------------"
     echo "VPS Configuration Menu:"
+    echo "----------------------------"
     echo "1: Docker Compose"
     echo "2: Portainer"
     echo "3: WireGuard (wg-easy)"
-    echo "4: SMB"
+    echo "4: Samba"
     echo "5: Port Forwarding"
     echo "6: Exit"
 }
