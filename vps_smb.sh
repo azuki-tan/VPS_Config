@@ -113,17 +113,15 @@ display_menu() {
   echo "1: Kết nối máy chủ Samba"
   echo "2: Liệt kê kết nối Samba"
   echo "3: Gỡ cài đặt Samba"
-  echo "4: Thoát"
-    echo "5: Gỡ folder mount"
-    echo "6: Thoát"
+  echo "4: Gỡ folder mount"
+  echo "5: Thoát"
   read -p "Chọn tùy chọn: " choice
   case "$choice" in
     1) connect_samba_server ;;
     2) list_connected_samba_servers ;;
     3) uninstall_samba ;;
-        4) exit 0 ;;
-    5) umount_samba_server ;;
-        6) exit 0;;
+    4) umount_samba_server ;;
+    6) exit 0;;
     *) echo "Tùy chọn không hợp lệ." ;;
   esac
 }
