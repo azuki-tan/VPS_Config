@@ -3,7 +3,9 @@
 # Function to display the Portainer menu
 show_portainer_menu() {
     clear
+    echo "----------------------------"
     echo "Portainer Menu:"
+    echo "----------------------------"
     echo "1: Install Portainer"
     echo "2: Uninstall Portainer"
     echo "3: Exit"
