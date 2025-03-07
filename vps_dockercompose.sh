@@ -3,7 +3,9 @@
 # Function to display the Docker Compose menu
 show_docker_menu() {
     clear
+    echo "------------------------------------"
     echo "Docker Compose Menu:"
+    echo "------------------------------------"
     echo "1: Install Docker Compose"
     echo "2: List Docker Compose Available"
     echo "3: List Docker Container Available"
