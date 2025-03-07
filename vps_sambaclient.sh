@@ -49,16 +49,22 @@ connect_samba_server() {
   echo ""  # Thêm dòng mới để tránh hiển thị mật khẩu
   sudo mkdir -p "$mount_point"
   sudo mount -t cifs "$server_address" "$mount_point" -o username="$username",password="$password"
-  if [ $? -ne 0 ]; then
+  if [ $? -eq 0 ]; then
+    read -n 1 -s -r -p "Kết nối thành công! Nhấn phím bất kỳ để tiếp tục..."
+    echo ""
+  else
     echo "Kết nối thất bại. Thử kết nối với SMB v2..."
     sudo mount -t cifs "$server_address" "$mount_point" -o username="$username",password="$password",vers=2.0
     if [ $? -eq 0 ]; then
-      echo "Kết nối thành công (SMB v2)!"
+      read -n 1 -s -r -p "Kết nối thành công (SMB v2)! Nhấn phím bất kỳ để tiếp tục..."
+      echo ""
     else
       echo "Kết nối thất bại. Xem lại thông tin kết nối và thử lại."
+      echo "Lỗi từ dmesg:"
+      sudo dmesg | tail -20
+      read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
+      echo ""
     fi
-  else
-    echo "Kết nối thành công!"
   fi
 }
 
@@ -66,6 +72,8 @@ connect_samba_server() {
 list_connected_samba_servers() {
   clear
   findmnt -t cifs
+  read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
+  echo ""
 }
 
 # Gỡ bỏ cài đặt Samba
@@ -79,14 +87,14 @@ uninstall_samba() {
   else
     echo "Hủy bỏ gỡ bỏ cài đặt."
   fi
+  read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
+  echo ""
 }
 
 # Hiển thị menu chính
 display_menu() {
   clear
-  echo "------------------------------"
   echo "Menu Samba Client"
-  echo "------------------------------"
   echo "1: Kết nối máy chủ Samba"
   echo "2: Liệt kê kết nối Samba"
   echo "3: Gỡ cài đặt Samba"
