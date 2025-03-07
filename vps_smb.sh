@@ -6,7 +6,9 @@ choice=""
 # Function to display the SMB menu
 show_smb_menu() {
     clear
+    echo "-------------------------------"
     echo "Samba Server Menu:"
+    echo "-------------------------------"
     echo "1: Install Samba Server"
     echo "2: Edit Samba Configuration"
     echo "3: Create Samba User"
@@ -24,12 +26,6 @@ install_smb() {
 
     # Create smb.conf with secure settings
     sudo tee /etc/samba/smb.conf <<EOF
-[global]
-   workgroup = WORKGROUP
-   server string = Samba Server
-   security = user
-   map to guest = never
-   dns proxy = no
 
 [root]
    path = /
