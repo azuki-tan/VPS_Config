@@ -21,7 +21,9 @@ fi
 # Hàm hiển thị menu và clear màn hình
 show_menu() {
   clear
+  echo "------------------------------------"
   echo "Menu Port Forwarding Socat"
+  echo "------------------------------------"
   echo "1. Start/Stop port forwarding"
   echo "2. Create port forwarding"
   echo "3. Change port forwarding"
