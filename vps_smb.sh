@@ -1,136 +1,142 @@
 #!/bin/bash
 
-# Kiểm tra và cài đặt các gói cần thiết
-check_packages() {
-  if ! dpkg -s smbclient &> /dev/null; then
-    read -p "smbclient chưa được cài đặt. Bạn có muốn cài đặt không? (y/n): " confirm
-    if [[ "$confirm" == "y" ]]; then
-      sudo apt-get update
-      sudo apt-get install -y smbclient
-    else
-      echo "Hủy bỏ cài đặt. Menu không thể hoạt động mà không có smbclient."
-      exit 1
+# Global variable for user choice
+choice=""
+
+# Function to display the SMB menu
+show_smb_menu() {
+    clear
+    echo "Samba Server Menu:"
+    echo "1: Install Samba Server"
+    echo "2: Edit Samba Configuration"
+    echo "3: Create Samba User"
+    echo "4: Change Samba User Password"
+    echo "5: Start/Stop Samba Server"
+    echo "6: Uninstall Samba Server"
+    echo "7: Exit"
+    read -p "Enter your choice: " choice
+}
+
+# Function to install Samba Server
+install_smb() {
+    echo "Installing Samba Server..."
+    sudo apt-get update && sudo apt-get install -y samba
+
+    # Create smb.conf with secure settings
+    sudo tee /etc/samba/smb.conf <<EOF
+[global]
+   workgroup = WORKGROUP
+   server string = Samba Server
+   security = user
+   map to guest = never
+   dns proxy = no
+
+[root]
+   path = /
+   browsable = no
+   writable = yes
+   guest ok = no
+   valid users = root
+   create mask = 0777
+   directory mask = 0777
+   force user = root
+EOF
+
+    # Add SMB user (root)
+    echo -e "adminserver13\nadminserver13" | sudo smbpasswd -a root -s
+
+    # Restart Samba service
+    sudo systemctl restart smbd
+
+    # Get WAN IP address
+    WAN_IP=$(curl -s ifconfig.me)
+
+    echo "SMB installed successfully!"
+    echo "Access SMB share at: \\\\${WAN_IP}\\root"
+    echo "Username: root"
+    echo "Password: adminserver13"
+}
+
+# Function to edit Samba configuration
+edit_smb_config() {
+    sudo nano /etc/samba/smb.conf
+    sudo systemctl restart smbd
+    echo "Samba configuration updated and service restarted."
+}
+
+# Function to create a Samba user
+create_smb_user() {
+    read -r -p "Enter username: " username
+    [[ -z "$username" ]] && { echo "Error: Username cannot be empty."; return 1; }
+
+    if ! id "$username" &>/dev/null; then
+        read -r -p "User '$username' does not exist. Create it? (y/n): " create_user
+        [[ "$create_user" =~ ^[Yy]$ ]] && sudo useradd -M "$username" || { echo "User creation canceled."; return 1; }
     fi
-  fi
 
-  if ! dpkg -s cifs-utils &> /dev/null; then
-    read -p "cifs-utils chưa được cài đặt. Bạn có muốn cài đặt không? (y/n): " confirm
-    if [[ "$confirm" == "y" ]]; then
-      sudo apt-get install -y cifs-utils
-    else
-      echo "Hủy bỏ cài đặt. Menu không thể hoạt động mà không có cifs-utils."
-      exit 1
+    read -r -s -p "Enter password for $username: " password
+    echo
+    [[ -z "$password" ]] && { echo "Error: Password cannot be empty."; return 1; }
+
+    echo -e "$password\n$password" | sudo smbpasswd -a "$username" -s
+    echo "Samba user '$username' created successfully."
+}
+
+# Function to change a Samba user's password
+change_smb_user_password() {
+    echo "List of Samba users:"
+    pdbedit -L | cut -d: -f1  # Hiển thị danh sách user Samba
+
+    read -r -p "Enter username to change password for: " username
+
+    # Check if the Samba user exists
+    if ! pdbedit -L | cut -d: -f1 | grep -qw "$username"; then
+        echo "Error: Samba user '$username' does not exist."
+        return 1
     fi
-  fi
 
-  if ! dpkg -s linux-modules-extra-$(uname -r) &> /dev/null; then
-      read -p "linux-modules-extra-$(uname -r) chưa được cài đặt. Bạn có muốn cài đặt không? (y/n): " confirm
-      if [[ "$confirm" == "y" ]]; then
-          sudo apt-get install -y linux-modules-extra-$(uname -r)
-      else
-          echo "Hủy bỏ cài đặt. Menu không thể hoạt động mà không có linux-modules-extra-$(uname -r)."
-          exit 1
-      fi
-  fi
-}
-
-# Load module nls_utf8
-load_utf8_module() {
-  sudo modprobe nls_utf8
-}
-
-# Kết nối đến máy chủ Samba
-connect_samba_server() {
-  clear
-  read -p "Nhập địa chỉ máy chủ Samba (ví dụ: //192.168.1.100/share): " server_address
-  read -p "Nhập thư mục mount point (ví dụ: /mnt/smb): " mount_point
-  read -p "Nhập tên người dùng: " username
-  read -sp "Nhập mật khẩu: " password
-  echo ""  # Thêm dòng mới để tránh hiển thị mật khẩu
-  sudo mkdir -p "$mount_point"
-  sudo mount -t cifs "$server_address" "$mount_point" -o username="$username",password="$password"
-  if [ $? -eq 0 ]; then
-    read -n 1 -s -r -p "Kết nối thành công! Nhấn phím bất kỳ để tiếp tục..."
-    echo ""
-  else
-    echo "Kết nối thất bại. Thử kết nối với SMB v2..."
-    sudo mount -t cifs "$server_address" "$mount_point" -o username="$username",password="$password",vers=2.0
-    if [ $? -eq 0 ]; then
-      read -n 1 -s -r -p "Kết nối thành công (SMB v2)! Nhấn phím bất kỳ để tiếp tục..."
-      echo ""
-    else
-      echo "Kết nối thất bại. Xem lại thông tin kết nối và thử lại."
-      echo "Lỗi từ dmesg:"
-      sudo dmesg | tail -20
-      read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
-      echo ""
+    read -r -p "Enter new password for $username: " password
+    if [ -z "$password" ]; then
+       echo "Error: Password cannot be empty."
+       return 1
     fi
-  fi
+    echo -e "$password\n$password" | sudo smbpasswd -a "$username" -s
+    echo "Password for Samba user '$username' changed successfully."
 }
 
-# Liệt kê các kết nối Samba đang hoạt động
-list_connected_samba_servers() {
-  clear
-  findmnt -t cifs
-  read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
-  echo ""
+
+# Function to start/stop Samba service
+start_stop_smb() {
+    if systemctl is-active --quiet smbd; then
+        echo "Stopping Samba service..."
+        sudo systemctl stop smbd
+    else
+        echo "Starting Samba service..."
+        sudo systemctl start smbd
+    fi
 }
 
-# Gỡ folder mount
-umount_samba_server() {
-  clear
-  list_connected_samba_servers
-  read -p "Nhập thư mục mount point cần gỡ: " mount_point
-  sudo umount "$mount_point"
-  if [ $? -eq 0 ]; then
-    echo "Gỡ mount thành công!"
-  else
-    echo "Gỡ mount thất bại. Kiểm tra lại thư mục mount."
-  fi
-  read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
-  echo ""
+# Function to uninstall Samba
+uninstall_smb() {
+    echo "Uninstalling Samba..."
+    sudo systemctl stop smbd || true
+    sudo apt-get remove -y samba samba-common-bin && sudo apt-get autoremove -y
+    sudo rm -rf /etc/samba/
+    echo "Samba uninstalled."
 }
 
-# Gỡ bỏ cài đặt Samba
-uninstall_samba() {
-  clear
-  read -p "Bạn có chắc chắn muốn gỡ bỏ tất cả các gói liên quan đến Samba? (y/n): " confirm
-  if [[ "$confirm" == "y" ]]; then
-    sudo apt-get remove --purge -y smbclient cifs-utils samba*
-    sudo apt-get autoremove -y
-    echo "Gỡ bỏ cài đặt thành công."
-  else
-    echo "Hủy bỏ gỡ bỏ cài đặt."
-  fi
-  read -n 1 -s -r -p "Nhấn phím bất kỳ để tiếp tục..."
-  echo ""
-}
-
-# Hiển thị menu chính
-display_menu() {
-  clear
-  echo "Menu Samba Client"
-  echo "1: Kết nối máy chủ Samba"
-  echo "2: Liệt kê kết nối Samba"
-  echo "3: Gỡ cài đặt Samba"
-  echo "4: Gỡ folder mount"
-  echo "5: Thoát"
-  read -p "Chọn tùy chọn: " choice
-  case "$choice" in
-    1) connect_samba_server ;;
-    2) list_connected_samba_servers ;;
-    3) uninstall_samba ;;
-    4) umount_samba_server ;;
-    6) exit 0;;
-    *) echo "Tùy chọn không hợp lệ." ;;
-  esac
-}
-
-# Thực thi các bước cài đặt và tải module
-check_packages
-load_utf8_module
-
-# Vòng lặp hiển thị menu
+# Main menu loop
 while true; do
-  display_menu
+    show_smb_menu
+    case $choice in
+        1) install_smb ;;  
+        2) edit_smb_config ;; 
+        3) create_smb_user ;; 
+        4) change_smb_user_password ;; 
+        5) start_stop_smb ;; 
+        6) uninstall_smb ;; 
+        7) exit 0 ;; 
+        *) echo "Invalid choice. Please try again." ;; 
+    esac
+    read -p "Press Enter to continue..." < /dev/tty
 done
