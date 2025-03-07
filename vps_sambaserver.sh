@@ -1,4 +1,4 @@
-#!/bin/bash
+                                         #!/bin/bash
 
 # Global variable for user choice
 choice=""
@@ -10,12 +10,13 @@ show_smb_menu() {
     echo "Samba Server Menu:"
     echo "-------------------------------"
     echo "1: Install Samba Server"
-    echo "2: Edit Samba Configuration"
-    echo "3: Create Samba User"
-    echo "4: Change Samba User Password"
-    echo "5: Start/Stop Samba Server"
-    echo "6: Uninstall Samba Server"
-    echo "7: Exit"
+    echo "2: Create Samba Folder Share"
+    echo "3: Edit Samba Configuration"
+    echo "4: Create Samba User"
+    echo "5: Change Samba User Password"
+    echo "6: Start/Stop Samba Server"
+    echo "7: Uninstall Samba Server"
+    echo "8: Exit"
     read -p "Enter your choice: " choice
 }
 
@@ -23,6 +24,14 @@ show_smb_menu() {
 install_smb() {
     echo "Installing Samba Server..."
     sudo apt-get update && sudo apt-get install -y samba
+    sudo systemctl unmask smbd
+    sudo systemctl start smbd
+    echo "Successful!"
+
+}
+
+#Create smb Folder
+create_smb_folder(){
 
     read -p "Enter folder path to share (e.g., /usr): " folder_path
     [[ -z "$folder_path" ]] && { echo "Error: Folder path cannot be empty."; return 1; }
@@ -65,14 +74,15 @@ EOF
     # Get LAN and WAN IP addresses
     LAN_IP=$(hostname -I | awk '{print $1}')
     WAN_IP=$(curl -s ifconfig.me)
-
+    
+    clear
     echo "\nSMB Share Created Successfully!"
     echo "Access your share at:"
     echo "\\\\$LAN_IP\\$share_name"
     echo "\\\\$WAN_IP\\$share_name"
     if [[ -n "$smbusername" ]]; then
         echo "Username: $smbusername"
-        echo "Password: $smbpassword"
+        echo "Password:  $smbpassword"
     else
         echo "Guest Access: Enabled"
     fi
@@ -144,12 +154,13 @@ while true; do
     show_smb_menu
     case $choice in
         1) install_smb ;;  
-        2) edit_smb_config ;; 
-        3) create_smb_user ;; 
-        4) change_smb_user_password ;; 
-        5) start_stop_smb ;; 
-        6) uninstall_smb ;; 
-        7) exit 0 ;; 
+        2) create_smb_folder;;
+        3) edit_smb_config ;; 
+        4) create_smb_user ;; 
+        5) change_smb_user_password ;; 
+        6) start_stop_smb ;; 
+        7) uninstall_smb ;; 
+        8) exit 0 ;; 
         *) echo "Invalid choice. Please try again." ;; 
     esac
     read -p "Press Enter to continue..." < /dev/tty
