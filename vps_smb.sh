@@ -24,33 +24,58 @@ install_smb() {
     echo "Installing Samba Server..."
     sudo apt-get update && sudo apt-get install -y samba
 
-    # Create smb.conf with secure settings
-    sudo tee /etc/samba/smb.conf <<EOF
+    read -p "Enter folder path to share (e.g., /usr): " folder_path
+    [[ -z "$folder_path" ]] && { echo "Error: Folder path cannot be empty."; return 1; }
 
-[root]
-   path = /
-   browsable = no
+    read -p "Enter Share name (default: folder name): " share_name
+    [[ -z "$share_name" ]] && share_name=$(basename "$folder_path")
+
+    read -p "Enter username (leave empty for guest access): " smbusername
+    if [[ -z "$smbusername" ]]; then
+        guest_access="yes"
+        smbpassword=""
+    else
+        guest_access="no"
+        read -p "Enter password (leave empty for no password): " smbpassword
+        [[ -z "$smbpassword" ]] && smbpassword=""
+    fi
+
+    # Update Samba configuration
+    sudo tee -a /etc/samba/smb.conf <<EOF
+
+[$share_name]
+   path = $folder_path
+   browsable = yes
    writable = yes
-   guest ok = no
-   valid users = root
+   guest ok = $guest_access
    create mask = 0777
    directory mask = 0777
-   force user = root
+   $( [[ -n "$smbusername" ]] && echo "valid users = $smbusername" )
 EOF
 
-    # Add SMB user (root)
-    echo -e "adminserver13\nadminserver13" | sudo smbpasswd -a root -s
+    # Create SMB user if necessary
+    if [[ -n "$smbusername" ]]; then
+        sudo useradd -M "$smbusername" 2>/dev/null || true
+        echo -e "$smbpassword\n$smbpassword" | sudo smbpasswd -a "$smbusername" -s
+    fi
 
     # Restart Samba service
     sudo systemctl restart smbd
 
-    # Get WAN IP address
+    # Get LAN and WAN IP addresses
+    LAN_IP=$(hostname -I | awk '{print $1}')
     WAN_IP=$(curl -s ifconfig.me)
 
-    echo "SMB installed successfully!"
-    echo "Access SMB share at: \\\\${WAN_IP}\\root"
-    echo "Username: root"
-    echo "Password: adminserver13"
+    echo "\nSMB Share Created Successfully!"
+    echo "Access your share at:"
+    echo "\\\\$LAN_IP\\$share_name"
+    echo "\\\\$WAN_IP\\$share_name"
+    if [[ -n "$smbusername" ]]; then
+        echo "Username: $smbusername"
+        echo "Password: $smbpassword"
+    else
+        echo "Guest Access: Enabled"
+    fi
 }
 
 # Function to edit Samba configuration
@@ -66,8 +91,7 @@ create_smb_user() {
     [[ -z "$username" ]] && { echo "Error: Username cannot be empty."; return 1; }
 
     if ! id "$username" &>/dev/null; then
-        read -r -p "User '$username' does not exist. Create it? (y/n): " create_user
-        [[ "$create_user" =~ ^[Yy]$ ]] && sudo useradd -M "$username" || { echo "User creation canceled."; return 1; }
+        sudo useradd -M "$username" || { echo "User creation failed."; return 1; }
     fi
 
     read -r -s -p "Enter password for $username: " password
@@ -81,25 +105,19 @@ create_smb_user() {
 # Function to change a Samba user's password
 change_smb_user_password() {
     echo "List of Samba users:"
-    pdbedit -L | cut -d: -f1  # Hiển thị danh sách user Samba
+    pdbedit -L | cut -d: -f1  
 
     read -r -p "Enter username to change password for: " username
-
-    # Check if the Samba user exists
     if ! pdbedit -L | cut -d: -f1 | grep -qw "$username"; then
         echo "Error: Samba user '$username' does not exist."
         return 1
     fi
 
     read -r -p "Enter new password for $username: " password
-    if [ -z "$password" ]; then
-       echo "Error: Password cannot be empty."
-       return 1
-    fi
+    [[ -z "$password" ]] && { echo "Error: Password cannot be empty."; return 1; }
     echo -e "$password\n$password" | sudo smbpasswd -a "$username" -s
     echo "Password for Samba user '$username' changed successfully."
 }
-
 
 # Function to start/stop Samba service
 start_stop_smb() {
