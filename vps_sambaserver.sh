@@ -45,7 +45,7 @@ create_smb_folder(){
         smbpassword=""
     else
         guest_access="no"
-        read -p "Enter password (leave empty for no password): " smbpassword
+        read -sp "Enter password (leave empty for no password): " smbpassword
         [[ -z "$smbpassword" ]] && smbpassword=""
     fi
 
