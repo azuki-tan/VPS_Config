@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Kiểm tra và cài đặt các gói cần thiết
+clear
 check_packages() {
   if ! dpkg -s smbclient &> /dev/null; then
     read -p "smbclient is not install. Install? (y/n): " confirm
