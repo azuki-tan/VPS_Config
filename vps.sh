@@ -9,10 +9,11 @@ show_main_menu() {
     echo "1: Docker Compose"
     echo "2: Portainer"
     echo "3: WireGuard Server Docker"
-    echo "4: Samba Server"
-    echo "5: Samba Client:"
-    echo "6: Port Forwarding"
-    echo "7: Exit"
+    echo "4: WireGuard Client"
+    echo "5: Samba Server"
+    echo "6: Samba Client:"
+    echo "7: Port Forwarding"
+    echo "8: Exit"
 }
 
 # Function to execute a remote script using bash <(curl -sSL "URL")
@@ -37,11 +38,12 @@ while true; do
     case "$choice" in
         1) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_dockercompose.sh" ;;
         2) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_portainer.sh" ;;
-        3) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_wireguard.sh" ;;
-        4) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_sambaserver.sh" ;;
-        5) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_sambaclient.sh" ;;
-        6) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_socat.sh" ;;
-        7) 
+        3) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_wireguardserver.sh" ;;
+        4) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_wireguardclient.sh" ;;
+        5) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_sambaserver.sh" ;;
+        6) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_sambaclient.sh" ;;
+        7) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_socat.sh" ;;
+        8) 
             echo "Exiting..."
             exit 0 
             ;;
