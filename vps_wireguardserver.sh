@@ -49,25 +49,25 @@ install_wireguard() {
     cat <<EOF > docker-compose.yml
 version: '3'
 services:
-  wg-easy:
-    image: ghcr.io/wg-easy/wg-easy:13
-    container_name: wg-easy
-    restart: unless-stopped
-    network_mode: host
-    cap_add:
-      - NET_ADMIN
-      - SYS_MODULE
-    environment:
-      - WG_HOST=$domain
-      - WG_DEFAULT_DNS=8.8.8.8,8.8.4.4
-      - UI_TRAFFIC_STATS=true
-      - UI_CHART_TYPE=2
-      - WG_ENABLE_ONE_TIME_LINKS=true
-      - PASSWORD=$password
-      - WG_PERSISTENT_KEEPALIVE=25
-      - WG_ALLOWED_IPS=10.8.0.0/24
-    volumes:
-      - ./config:/etc/wireguard
+    wg-easy:
+        image: ghcr.io/wg-easy/wg-easy:13
+        container_name: wg-easy
+        restart: unless-stopped
+        network_mode: host
+        cap_add:
+            - NET_ADMIN
+            - SYS_MODULE
+        environment:
+            - WG_HOST=$domain
+            - WG_DEFAULT_DNS=8.8.8.8,8.8.4.4
+            - UI_TRAFFIC_STATS=true
+            - UI_CHART_TYPE=2
+            - WG_ENABLE_ONE_TIME_LINKS=true
+            - PASSWORD=$password
+            - WG_PERSISTENT_KEEPALIVE=25
+            - WG_ALLOWED_IPS=10.8.0.0/24
+        volumes:
+            - ./config:/etc/wireguard
 EOF
 
     # Enable IP forwarding
@@ -79,6 +79,11 @@ EOF
 
     # Start WireGuard with Docker Compose
     docker compose up -d
+
+    # Add iptables rules
+    sudo iptables -A FORWARD -i wg0 -j ACCEPT
+    sudo iptables -A FORWARD -o wg0 -j ACCEPT
+    sudo iptables -A INPUT -p udp --dport 51820 -j ACCEPT
 
     echo "WireGuard (wg-easy) installed successfully!"
     echo "Access the web UI at:"
@@ -145,6 +150,11 @@ stop_start_wireguard() {
     else
         echo "Starting WireGuard container..."
         docker compose up -d
+
+        # Add iptables rules after starting
+        sudo iptables -A FORWARD -i wg0 -j ACCEPT
+        sudo iptables -A FORWARD -o wg0 -j ACCEPT
+        sudo iptables -A INPUT -p udp --dport 51820 -j ACCEPT
     fi
 }
 
