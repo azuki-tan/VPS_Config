@@ -59,6 +59,7 @@ create_smb_folder(){
    guest ok = $guest_access
    create mask = 0777
    directory mask = 0777
+   force user = root
    $( [[ -n "$smbusername" ]] && echo "valid users = $smbusername" )
 EOF
 
