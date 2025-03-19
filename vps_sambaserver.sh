@@ -54,7 +54,7 @@ create_smb_folder(){
 
 [$share_name]
    path = $folder_path
-   browsable = yes
+   browsable = no
    writable = yes
    guest ok = $guest_access
    create mask = 0777
