@@ -13,7 +13,8 @@ show_main_menu() {
     echo "5: Samba Server"
     echo "6: Samba Client:"
     echo "7: Port Forwarding"
-    echo "8: Exit"
+    echo "8: Management Network"
+    echo "9: Exit"
 }
 
 # Function to execute a remote script using bash <(curl -sSL "URL")
@@ -43,7 +44,8 @@ while true; do
         5) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_sambaserver.sh" ;;
         6) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_sambaclient.sh" ;;
         7) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_socat.sh" ;;
-        8) 
+        8) execute_remote_script "https://github.com/azuki-tan/VPS_Config/raw/refs/heads/main/vps_netplan.sh" ;;
+        9) 
             echo "Exiting..."
             exit 0 
             ;;
