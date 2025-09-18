@@ -44,7 +44,7 @@ while true; do
         5) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_sambaserver.sh" ;;
         6) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_sambaclient.sh" ;;
         7) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_socat.sh" ;;
-        8) execute_remote_script "https://github.com/azuki-tan/VPS_Config/raw/refs/heads/main/vps_netplan.sh" ;;
+        8) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/raw/refs/heads/main/vps_netplan.sh" ;;
         9) 
             echo "Exiting..."
             exit 0 
