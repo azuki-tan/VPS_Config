@@ -3,61 +3,106 @@
 # Function to display the Portainer menu
 show_portainer_menu() {
     clear
-    echo "----------------------------"
-    echo "Portainer Menu:"
-    echo "----------------------------"
+    echo "============================"
+    echo "    Portainer Management"
+    echo "============================"
     echo "1: Install Portainer"
     echo "2: Uninstall Portainer"
-    echo "3: Exit"
+    echo "3: Update Portainer"
+    echo "4: Exit"
+    echo "----------------------------"
 }
 
 # Function to get the WAN IP address
 get_wan_ip() {
-    curl -s ifconfig.me
+    # Try multiple services for better reliability
+    curl -s ifconfig.me || curl -s icanhazip.com
 }
 
 # Function to get the LAN IP address
 get_lan_ip() {
-    ip route get 1.1.1.1 | awk '{print $7}'
+    # This command is more robust for finding the primary LAN IP
+    ip -4 route get 1.1.1.1 | awk '{print $7}' | head -n1
 }
 
 # Function to install Portainer
 install_portainer() {
-    echo "Installing Portainer..."
+    echo "⏳ Installing Portainer..."
     
     # Create Portainer data volume
-    docker volume create portainer_data
+    echo "  - Creating volume 'portainer_data'..."
+    docker volume create portainer_data > /dev/null
     
     # Run Portainer Server
+    echo "  - Pulling the latest LTS image..."
+    docker pull portainer/portainer-ce:lts > /dev/null
+
+    echo "  - Starting Portainer container..."
     docker run -d \
         -p 8000:8000 -p 9443:9443 \
         --name portainer --restart=always \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v portainer_data:/data \
-        portainer/portainer-ce:lts
+        portainer/portainer-ce:lts > /dev/null
     
     # Get WAN and LAN IP addresses
     WAN_IP=$(get_wan_ip)
     LAN_IP=$(get_lan_ip)
     
-    echo "Portainer installed successfully!"
+    echo ""
+    echo "✅ Portainer installed successfully!"
     echo "Access Portainer at:"
-    echo "  WAN: https://${WAN_IP}:9443"
-    echo "  LAN: https://${LAN_IP}:9443"
+    [ ! -z "$WAN_IP" ] && echo "   WAN: https://${WAN_IP}:9443"
+    [ ! -z "$LAN_IP" ] && echo "   LAN: https://${LAN_IP}:9443"
 }
 
 # Function to uninstall Portainer
 uninstall_portainer() {
-    echo "Uninstalling Portainer..."
+    read -p "⚠️ This will remove the Portainer container. Do you want to also remove all Portainer data (volume)? (y/N): " confirm_delete_data
+    echo "⏳ Uninstalling Portainer..."
     
     # Stop and remove the Portainer container
-    docker stop portainer 2>/dev/null || true  # Ignore errors if container is not running
-    docker rm portainer 2>/dev/null || true    # Ignore errors if container does not exist
+    echo "  - Stopping container 'portainer'..."
+    docker stop portainer > /dev/null 2>&1
+    echo "  - Removing container 'portainer'..."
+    docker rm portainer > /dev/null 2>&1
     
-    # Remove the Portainer data volume (optional, removes all stored data)
-    docker volume rm portainer_data 2>/dev/null || true
+    # Remove the Portainer data volume if confirmed
+    if [[ "$confirm_delete_data" == "y" || "$confirm_delete_data" == "Y" ]]; then
+        echo "  - Removing volume 'portainer_data'..."
+        docker volume rm portainer_data > /dev/null 2>&1
+        echo "✅ Portainer and all its data have been removed."
+    else
+        echo "✅ Portainer container removed. Data volume 'portainer_data' was kept."
+    fi
+}
+
+# Function to update Portainer
+update_portainer() {
+    echo "⏳ Updating Portainer..."
     
-    echo "Portainer uninstalled."
+    # 1. Stop the current container
+    echo "  - Stopping the current Portainer container..."
+    docker stop portainer
+    
+    # 2. Remove the current container
+    echo "  - Removing the current Portainer container..."
+    docker rm portainer
+    
+    # 3. Pull the latest image to ensure we have the newest version
+    echo "  - Pulling the latest 'portainer/portainer-ce:lts' image..."
+    docker pull portainer/portainer-ce:lts
+    
+    # 4. Start a new container with the exact same volume mapping
+    echo "  - Starting a new Portainer container with existing data..."
+    docker run -d \
+        -p 8000:8000 -p 9443:9443 \
+        --name portainer --restart=always \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v portainer_data:/data \
+        portainer/portainer-ce:lts > /dev/null
+        
+    echo "✅ Portainer has been updated successfully!"
 }
 
 # Main menu loop
@@ -68,19 +113,23 @@ while true; do
     case $choice in
         1)
             install_portainer
-            read -p "Press Enter to continue..." < /dev/tty
+            read -n 1 -s -r -p "Press any key to continue..."
             ;;
         2)
             uninstall_portainer
-            read -p "Press Enter to continue..." < /dev/tty
+            read -n 1 -s -r -p "Press any key to continue..."
             ;;
         3)
+            update_portainer
+            read -n 1 -s -r -p "Press any key to continue..."
+            ;;
+        4)
             echo "Exiting..."
             break
             ;;
         *)
             echo "Invalid choice. Please try again."
-            read -p "Press Enter to continue..." < /dev/tty
+            read -n 1 -s -r -p "Press any key to continue..."
             ;;
     esac
 done
