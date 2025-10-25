@@ -6,15 +6,17 @@ show_main_menu() {
     echo "----------------------------"
     echo "VPS Configuration Menu:"
     echo "----------------------------"
-    echo "1: Docker Compose"
-    echo "2: Portainer"
-    echo "3: WireGuard Server Docker"
-    echo "4: WireGuard Client"
-    echo "5: Samba Server"
-    echo "6: Samba Client:"
-    echo "7: Port Forwarding"
-    echo "8: Management Network"
-    echo "9: Exit"
+    echo "1:  Docker Compose"
+    echo "2:  Portainer"
+    echo "3:  WireGuard Server Docker"
+    echo "4:  WireGuard Client"
+    echo "5:  Samba Server"
+    echo "6:  Samba Client:"
+    echo "7:  Port Forwarding"
+    echo "8:  Management Network"
+    echo "9:  Speedtest"
+    echo "10: Tar_extract"
+    echo "11: Exit"
 }
 
 # Function to execute a remote script using bash <(curl -sSL "URL")
@@ -44,8 +46,10 @@ while true; do
         5) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_sambaserver.sh" ;;
         6) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_sambaclient.sh" ;;
         7) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_socat.sh" ;;
-        8) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/raw/refs/heads/main/vps_netplan.sh" ;;
-        9) 
+        8) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_netplan.sh" ;;
+        9) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_speedtest.sh" ;;
+        10) execute_remote_script "https://raw.githubusercontent.com/azuki-tan/VPS_Config/refs/heads/main/vps_tar.sh" ;;
+        11) 
             echo "Exiting..."
             exit 0 
             ;;
