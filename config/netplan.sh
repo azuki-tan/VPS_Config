@@ -135,9 +135,29 @@ apply_netplan_changes() {
     echo -e "${YELLOW}Sẽ áp dụng cấu hình Netplan. Bạn có thể bị mất kết nối SSH nếu có lỗi.${NC}"
     read -p "Bạn có chắc chắn muốn tiếp tục? (y/n): " confirm
     if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
+        
+        # --- BẮT ĐẦU ĐOẠN MỚI THÊM ---
+        echo "Đang dọn dẹp file tạm và sửa quyền hạn..."
+        
+        # 1. Đặt quyền 600 (chỉ root đọc/ghi) cho toàn bộ file trong /etc/netplan
+        # Khắc phục lỗi "permissions are too open"
+        if [ -d "/etc/netplan" ]; then
+            chmod 600 /etc/netplan/*
+        fi
+
+        # 2. Xóa cache cấu hình cũ của Netplan
+        # Khắc phục lỗi cache bị kẹt hoặc lỗi quyền trong /run
+        rm -rf /run/netplan/*
+        # --- KẾT THÚC ĐOẠN MỚI THÊM ---
+
         echo "Đang áp dụng cấu hình..."
         netplan apply
-        echo -e "${GREEN}Hoàn tất! Hãy kiểm tra lại kết nối mạng của bạn.${NC}"
+        
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}Hoàn tất! Hãy kiểm tra lại kết nối mạng của bạn.${NC}"
+        else
+            echo -e "${RED}Có lỗi xảy ra khi áp dụng Netplan.${NC}"
+        fi
     else
         echo "Đã hủy bỏ."
     fi
